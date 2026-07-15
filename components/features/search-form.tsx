@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Calendar, Truck, Search, SlidersHorizontal } from "lucide-react";
+import { MapPin, Calendar, Truck, Search, SlidersHorizontal, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { VEHICLE_TYPES, VEHICLE_LABELS } from "@/lib/enums";
@@ -24,9 +24,9 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
   return (
     <form
       onSubmit={onSubmit}
-      className="bg-white rounded-[18px] border border-line shadow-[var(--shadow-lift)] p-4 sm:p-6 ring-1 ring-line/50"
+      className="relative rounded-[20px] border border-brand/25 shadow-[var(--shadow-lift)] p-4 sm:p-6 ring-1 ring-brand/10 bg-gradient-to-br from-brand-soft/70 via-white to-brand-soft/40"
     >
-      <div className={`grid gap-3 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-4"}`}>
+      <div className={`grid gap-3 ${compact ? "sm:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-5"}`}>
         <Field icon={<MapPin size={16} />} label="Pickup">
           <Input name="from" placeholder="From (e.g. London)" list="areas" />
         </Field>
@@ -35,6 +35,9 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
         </Field>
         <Field icon={<Calendar size={16} />} label="Date">
           <Input name="date" type="date" />
+        </Field>
+        <Field icon={<Scale size={16} />} label="Weight (kg)">
+          <Input name="weightKg" type="number" min="0" placeholder="e.g. 100" />
         </Field>
         <Field icon={<Truck size={16} />} label="Vehicle">
           <Select name="vehicleType" defaultValue="">

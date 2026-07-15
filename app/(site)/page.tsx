@@ -1,7 +1,7 @@
 import Link from "next/link";
 import {
   Zap, Scale, ShieldCheck, Star, Wallet,
-  MapPinned, Globe2, Truck, Eye, ArrowRight, ArrowUpRight, Quote, CheckCircle2, Plus,
+  MapPinned, Globe2, Truck, Eye, ArrowRight, ArrowUpRight, CheckCircle2,
 } from "lucide-react";
 import { Container, SectionTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,10 +10,36 @@ import { CarrierCard } from "@/components/features/carrier-card";
 import { StarRow } from "@/components/features/rating";
 import { getTopCarriers, getPopularAreas, getPublishedReviews } from "@/server/services/carriers";
 import { shortName } from "@/lib/utils";
-import { Reveal, FadeUp, Stagger, StaggerItem, ZoomImage, CountUp } from "@/components/motion/reveal";
-import { Marquee } from "@/components/motion/marquee";
+import { Reveal, FadeUp, Stagger, StaggerItem, ZoomImage } from "@/components/motion/reveal";
+import { ReviewsCarousel } from "@/components/features/reviews-carousel";
+import { FaqAccordion } from "@/components/features/faq-accordion";
 
-const DEST_IMAGES = ["/images/dest-1.jpg", "/images/dest-2.jpg", "/images/dest-3.jpg", "/images/dest-4.jpg", "/images/dest-5.jpg"];
+// Різкіші зображення (dest-*.jpg були низькороздільні → блюр при масштабуванні).
+const DEST_IMAGES = [
+  "/images/service-1.jpg",
+  "/images/step-1.jpg",
+  "/images/warehouse-wide.webp",
+  "/images/service-2.jpg",
+  "/images/step-3.jpg",
+  "/images/cta.jpg",
+  "/images/service-3.jpg",
+  "/images/step-4.jpg",
+];
+
+// Карта покриття (детальна карта Європи, viewBox у map-space).
+// Перша точка — хаб (London), решта — напрямки з дугами від хабу.
+const MAP_VIEWBOX = "360 352 115 78";
+const MAP_ORIGIN = { x: 360, y: 352, w: 115, h: 78 };
+const MAP_CITIES = [
+  { mx: 405, my: 389, label: "London", hub: true },
+  { mx: 410, my: 409, label: "France" },
+  { mx: 431, my: 391, label: "Germany" },
+  { mx: 450, my: 388, label: "Poland" },
+];
+const pinPct = (mx: number, my: number) => ({
+  left: ((mx - MAP_ORIGIN.x) / MAP_ORIGIN.w) * 100,
+  top: ((my - MAP_ORIGIN.y) / MAP_ORIGIN.h) * 100,
+});
 
 export default async function HomePage() {
   const [topCarriers, areas, reviews] = await Promise.all([
@@ -22,13 +48,29 @@ export default async function HomePage() {
     getPublishedReviews(12),
   ]);
 
+  // Coverage layout: дві великі 2×2-картки по діагоналі (London зверху-ліворуч,
+  // Northern Ireland знизу-праворуч). Впорядковуємо так, щоб NI став 8-м елементом —
+  // тоді CSS grid auto-flow ставить його 2×2 у нижній правий кут.
+  const FEATURED_COVERAGE = ["London", "Northern Ireland"];
+  const coverageAreas = (() => {
+    const london = areas.find((a) => a.name === "London");
+    const ni = areas.find((a) => a.name === "Northern Ireland");
+    const rest = areas.filter((a) => a.name !== "London" && a.name !== "Northern Ireland");
+    const out: typeof areas = [];
+    if (london) out.push(london);
+    out.push(...rest.slice(0, 6));
+    if (ni) out.push(ni);
+    out.push(...rest.slice(6));
+    return out.length ? out : areas;
+  })();
+
   return (
     <>
       {/* ═══ HERO — split composition + integrated quote form ═══ */}
       <section className="relative overflow-hidden bg-halo border-b border-line">
         <div className="absolute inset-0 bg-grid opacity-40" />
-        <Container className="relative section-pt pb-16">
-          <div className="grid lg:grid-cols-[1.05fr_.95fr] gap-10 lg:gap-16 items-center">
+        <Container className="relative pt-8 lg:pt-12 pb-16">
+          <div className="grid lg:grid-cols-[1fr_1.1fr] gap-10 lg:gap-16 items-center">
             <div>
               <FadeUp><div className="eyebrow mb-5">Secure & reliable moving · UK ↔ Europe</div></FadeUp>
               <FadeUp delay={0.08}>
@@ -42,15 +84,10 @@ export default async function HomePage() {
                   ratings, and book online. No upfront payment — you pay your driver directly.
                 </p>
               </FadeUp>
-              <FadeUp delay={0.24} className="mt-7 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-ink">
-                <span className="inline-flex items-center gap-2"><ShieldCheck size={17} className="text-brand" /> Verified carriers</span>
-                <span className="inline-flex items-center gap-2"><Wallet size={17} className="text-brand" /> No online payment</span>
-                <span className="inline-flex items-center gap-2"><Star size={17} className="text-brand" /> Real ratings</span>
-              </FadeUp>
             </div>
 
             <FadeUp delay={0.2} className="relative">
-              <div className="relative aspect-[4/5] sm:aspect-[5/5] max-w-md ml-auto rounded-[26px] overflow-hidden border border-line shadow-[var(--shadow-lift)]">
+              <div className="relative aspect-[4/5] sm:aspect-square lg:aspect-[5/4] max-w-xl ml-auto rounded-[30px] overflow-hidden border border-line shadow-[var(--shadow-lift)]">
                 <ZoomImage className="w-full h-full">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/images/hero-courier.webp" alt="Verified REVORA mover checking a delivery" className="w-full h-full object-cover" />
@@ -79,20 +116,6 @@ export default async function HomePage() {
             <SearchForm />
           </FadeUp>
 
-          {/* Stat strip — count-up on real, honest figures (cold-start safe) */}
-          <FadeUp delay={0.4} className="mt-12 grid grid-cols-2 sm:grid-cols-4 gap-x-8 gap-y-6 max-w-3xl">
-            {[
-              { n: 4, suffix: "", big: <CountUp value={4} />, small: "UK nations covered" },
-              { n: 9, suffix: "", big: <CountUp value={9} />, small: "EU countries reachable" },
-              { n: 10, suffix: "+", big: <CountUp value={10} suffix="+" />, small: "Moving service types" },
-              { n: 0, suffix: "", big: <span>£<CountUp value={0} /></span>, small: "Online payment — ever" },
-            ].map((s) => (
-              <div key={s.small}>
-                <div className="display-md text-ink-strong tabular-nums">{s.big}</div>
-                <div className="text-sm text-muted mt-1">{s.small}</div>
-              </div>
-            ))}
-          </FadeUp>
         </Container>
       </section>
 
@@ -102,28 +125,28 @@ export default async function HomePage() {
           <Reveal className="flex flex-wrap items-end justify-between gap-4 mb-10">
             <SectionTitle eyebrow="Coverage" title="Popular cities & directions"
               subtitle="From local Man & Van moves to international UK ↔ Europe transport." className="mb-0" />
-            <Button href="/catalog" variant="outline" size="sm" className="hidden sm:inline-flex shrink-0">
+            <Button href="/catalog" variant="primary" size="sm" className="hidden sm:inline-flex shrink-0">
               Browse all coverage <ArrowRight size={16} />
             </Button>
           </Reveal>
 
           <Stagger className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[168px] gap-3.5">
-            {areas.map((a, i) => {
-              const featured = i === 0;
+            {coverageAreas.map((a, i) => {
+              const featured = FEATURED_COVERAGE.includes(a.name);
               const isCountry = a.type === "COUNTRY";
               const href = isCountry ? `/catalog?to=${encodeURIComponent(a.name)}` : `/catalog?from=${encodeURIComponent(a.name)}`;
               return (
                 <StaggerItem key={a.id} className={featured ? "col-span-2 row-span-2" : ""}>
                   <Link href={href} className="img-overlay-hover card-hover group relative block h-full w-full rounded-[18px] overflow-hidden border border-line">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={DEST_IMAGES[i % DEST_IMAGES.length]} alt={a.name} className="absolute inset-0 h-full w-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-ink-strong/85 via-ink-strong/25 to-transparent" />
+                    <img src={DEST_IMAGES[i % DEST_IMAGES.length]} alt={a.name} loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-ink-strong/95 via-ink-strong/55 to-ink-strong/10" />
                     <div className="img-overlay bg-brand/15" />
-                    <div className="relative h-full flex flex-col justify-between p-4">
+                    <div className="relative h-full flex flex-col justify-between p-4 [text-shadow:0_1px_8px_rgba(0,0,0,.45)]">
                       <span className="self-start inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur-sm text-white text-[11px] font-medium px-2.5 py-1">
-                        <span className="relative grid place-items-center">
-                          <span className="pulse-dot w-1.5 h-1.5" />
-                          <span className="relative w-1.5 h-1.5 rounded-full bg-brand-bright" />
+                        <span className="relative inline-grid place-items-center">
+                          <span className="pulse-dot col-start-1 row-start-1 w-2.5 h-2.5" />
+                          <span className="col-start-1 row-start-1 w-1.5 h-1.5 rounded-full bg-brand-bright ring-1 ring-white/40" />
                         </span>
                         {isCountry ? "International" : "UK"}
                       </span>
@@ -164,25 +187,49 @@ export default async function HomePage() {
                   ))}
                 </div>
               </div>
-              <div className="relative">
+              <div className="relative w-full" style={{ aspectRatio: "115 / 78" }}>
+                {/* Детальна карта Європи (UK — синім, решта — сірим) */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/world-map.svg" alt="Coverage across the UK and Europe" className="w-full opacity-90" />
-                {/* Approximate decorative pins over the UK / western-Europe region */}
-                {[
-                  { top: "34%", left: "45.5%", label: "London" },
-                  { top: "30%", left: "44.5%", label: "Manchester" },
-                  { top: "39%", left: "47.5%", label: "Paris" },
-                  { top: "34%", left: "50%", label: "Berlin" },
-                  { top: "35%", left: "52.5%", label: "Warsaw" },
-                ].map((p) => (
-                  <span key={p.label} className="absolute -translate-x-1/2 -translate-y-1/2 group" style={{ top: p.top, left: p.left }}>
-                    <span className="relative grid place-items-center">
-                      <span className="pulse-dot w-2.5 h-2.5" />
-                      <span className="relative w-2.5 h-2.5 rounded-full bg-brand ring-2 ring-white" />
+                <img src="/images/europe-map.svg" alt="Coverage across the UK and Europe" className="absolute inset-0 h-full w-full object-contain" />
+
+                {/* Пунктирні дуги від London до напрямків */}
+                <svg viewBox={MAP_VIEWBOX} preserveAspectRatio="xMidYMid meet" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
+                  {MAP_CITIES.filter((c) => !c.hub).map((c) => {
+                    const hub = MAP_CITIES[0];
+                    const cx = (hub.mx + c.mx) / 2;
+                    const cy = Math.min(hub.my, c.my) - 12;
+                    return (
+                      <path
+                        key={c.label}
+                        d={`M ${hub.mx} ${hub.my} Q ${cx} ${cy} ${c.mx} ${c.my}`}
+                        fill="none"
+                        stroke="#146ef5"
+                        strokeWidth="1.1"
+                        strokeDasharray="3 3"
+                        opacity="0.7"
+                        vectorEffect="non-scaling-stroke"
+                      />
+                    );
+                  })}
+                </svg>
+
+                {/* Точки + завжди-видимі пігулки-мітки */}
+                {MAP_CITIES.map((c) => {
+                  const pos = pinPct(c.mx, c.my);
+                  return (
+                    <span
+                      key={c.label}
+                      className="absolute z-10 flex items-center gap-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pl-1.5 pr-3 py-1 shadow-[var(--shadow-lift)] border border-line/70"
+                      style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
+                    >
+                      <span className="relative grid place-items-center">
+                        {c.hub && <span className="pulse-dot col-start-1 row-start-1 w-3 h-3" />}
+                        <span className={`col-start-1 row-start-1 rounded-full ring-2 ring-white ${c.hub ? "w-3 h-3 bg-brand" : "w-2.5 h-2.5 bg-brand"}`} />
+                      </span>
+                      <span className="text-[13px] font-semibold text-ink-strong whitespace-nowrap">{c.label}</span>
                     </span>
-                    <span className="absolute left-1/2 -translate-x-1/2 -top-6 whitespace-nowrap text-[10px] font-semibold text-ink-strong bg-white/90 border border-line rounded px-1.5 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity">{p.label}</span>
-                  </span>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </Reveal>
@@ -194,7 +241,7 @@ export default async function HomePage() {
         <Container>
           <Reveal className="flex items-end justify-between mb-10 gap-4">
             <SectionTitle eyebrow="Top drivers" title="Trusted movers on REVORA" className="mb-0" />
-            <Button href="/catalog" variant="outline" size="sm" className="hidden sm:inline-flex shrink-0">
+            <Button href="/catalog" variant="primary" size="sm" className="hidden sm:inline-flex shrink-0">
               View all <ArrowRight size={16} />
             </Button>
           </Reveal>
@@ -300,34 +347,23 @@ export default async function HomePage() {
         </Container>
       </section>
 
-      {/* ═══ REVIEWS — marquee band ═══ */}
+      {/* ═══ REVIEWS — paginated carousel ═══ */}
       {reviews.length > 0 && (
-        <section className="section-y overflow-hidden">
+        <section className="section-y">
           <Container>
             <Reveal><SectionTitle eyebrow="Reviews" title="What customers say" align="center" /></Reveal>
+            <Reveal className="mt-4">
+              <ReviewsCarousel
+                reviews={reviews.map((r) => ({
+                  id: r.id,
+                  overall: r.overall,
+                  text: r.text,
+                  authorName: shortName(r.authorName),
+                  carrierName: r.carrier.companyName || r.carrier.user?.name || "REVORA carrier",
+                }))}
+              />
+            </Reveal>
           </Container>
-          <Reveal className="mt-4">
-            <Marquee durationSec={Math.max(28, reviews.length * 6)} gap="1.25rem">
-              {reviews.map((r) => (
-                <article key={r.id} className="w-[340px] shrink-0 rounded-[18px] border border-line bg-white p-6 shadow-[var(--shadow-whisper)]">
-                  <div className="flex items-center justify-between">
-                    <Quote className="text-brand" size={22} />
-                    <StarRow value={r.overall} />
-                  </div>
-                  <p className="text-ink mt-4 text-[15px] leading-relaxed line-clamp-4">“{r.text}”</p>
-                  <div className="mt-5 pt-5 border-t border-line flex items-center gap-3">
-                    <span className="grid place-items-center w-10 h-10 rounded-full bg-brand-soft text-brand font-semibold text-sm shrink-0">
-                      {shortName(r.authorName).slice(0, 1)}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-semibold text-ink-strong truncate">{shortName(r.authorName)}</p>
-                      <p className="text-xs text-muted truncate">{r.carrier.companyName || r.carrier.user?.name}</p>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </Marquee>
-          </Reveal>
         </section>
       )}
 
@@ -341,23 +377,11 @@ export default async function HomePage() {
               <p className="text-muted mt-3 text-[15px]">
                 Everything about quotes, payment and verification. Still unsure?
               </p>
-              <Button href="/register" variant="outline" size="sm" className="mt-5">
+              <Button href="/register" variant="primary" size="sm" className="mt-5">
                 Become a partner <ArrowRight size={16} />
               </Button>
             </Reveal>
-            <Stagger className="space-y-3">
-              {FAQ.map((f) => (
-                <StaggerItem key={f.q}>
-                  <details className="group rounded-[18px] border border-line bg-white p-5 shadow-[var(--shadow-whisper)] transition-colors open:border-brand/40">
-                    <summary className="font-semibold text-ink-strong cursor-pointer list-none flex items-center justify-between gap-4">
-                      {f.q}
-                      <span className="grid place-items-center w-7 h-7 shrink-0 rounded-full bg-brand-soft text-brand group-open:rotate-45 transition-transform"><Plus size={16} /></span>
-                    </summary>
-                    <p className="text-muted text-[15px] mt-3 leading-relaxed">{f.a}</p>
-                  </details>
-                </StaggerItem>
-              ))}
-            </Stagger>
+            <Reveal><FaqAccordion items={FAQ} /></Reveal>
           </div>
         </Container>
       </section>

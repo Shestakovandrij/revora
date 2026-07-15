@@ -38,7 +38,11 @@ export function SiteHeader({ session }: { session: Session | null }) {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const isActive = (href: string) => href === "/" ? pathname === "/" : pathname.startsWith(href.split("#")[0]) && href !== "/";
+  const isActive = (href: string) => {
+    if (href.includes("#")) return false; // якорі на секції — не підсвічуємо постійно
+    if (href === "/") return pathname === "/";
+    return pathname.startsWith(href);
+  };
 
   return (
     <header
@@ -51,8 +55,8 @@ export function SiteHeader({ session }: { session: Session | null }) {
     >
       <div
         className={cn(
-          "mx-auto w-full max-w-[1220px] px-5 sm:px-8 flex items-center justify-between gap-4 transition-all duration-300",
-          scrolled ? "h-14" : "h-[72px]"
+          "mx-auto w-full max-w-[1800px] px-5 sm:px-8 lg:px-[90px] flex items-center justify-between gap-4 transition-all duration-300",
+          scrolled ? "h-[76px]" : "h-24"
         )}
       >
         <Logo />

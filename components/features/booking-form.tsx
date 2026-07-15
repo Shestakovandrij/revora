@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { formatPrice } from "@/lib/utils";
 import { computeEstimate, type PricingRates } from "@/lib/pricing";
 import { estimateDistanceMiles, isInternational } from "@/lib/uk-geo";
-import { VEHICLE_TYPES, VEHICLE_LABELS } from "@/lib/enums";
+import { VEHICLE_TYPES, VEHICLE_LABELS, CARGO_TYPES } from "@/lib/enums";
 import { createBookingAction, type BookingResult } from "@/app/(site)/book/actions";
 
 type Values = Record<string, string | boolean>;
@@ -26,20 +26,36 @@ export function BookingForm({
   carrierName,
   rates,
   services,
+  defaults = {},
 }: {
   carrierSlug: string;
   carrierName: string;
   rates: PricingRates;
   services: { code: string; name: string }[];
+  defaults?: Record<string, string>;
 }) {
   const [step, setStep] = useState(0);
   const [v, setV] = useState<Values>({
-    serviceCode: services[0]?.code ?? "",
-    pickupAddress: "",
-    deliveryAddress: "",
+    serviceCode: defaults.service || services[0]?.code || "",
+    pickupAddress: defaults.from ?? "",
+    deliveryAddress: defaults.to ?? "",
+    date: defaults.date ?? "",
     pickupFloor: "0",
     deliveryFloor: "0",
+    vehicleType: defaults.vehicleType ?? "",
     numberOfHelpers: "0",
+    cargoType: defaults.cargoType ?? "",
+    cargoWeightKg: defaults.weightKg ?? "",
+    cargoLengthCm: defaults.lengthCm ?? "",
+    cargoWidthCm: defaults.widthCm ?? "",
+    cargoHeightCm: defaults.heightCm ?? "",
+    cargoVolumeM3: defaults.volumeM3 ?? "",
+    cargoPlaces: defaults.cargoPlaces ?? "",
+    loadingMethod: defaults.loadingMethod ?? "",
+    unloadingMethod: defaults.unloadingMethod ?? "",
+    fragile: defaults.fragile === "1",
+    loadingHelp: defaults.loadingHelp === "1",
+    additionalNotes: defaults.comment ?? "",
     liftAvailable: false,
     packing: false,
     assembly: false,
@@ -209,8 +225,28 @@ export function BookingForm({
                 </Select>
               </div>
             </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <Label>Cargo type</Label>
+                <Select value={str("cargoType")} onChange={(e) => set("cargoType", e.target.value)}>
+                  <option value="">Select…</option>
+                  {CARGO_TYPES.map((c) => <option key={c.code} value={c.code}>{c.name}</option>)}
+                </Select>
+              </div>
+              <div><Label>Weight (kg)</Label><Input type="number" min={0} value={str("cargoWeightKg")} onChange={(e) => set("cargoWeightKg", e.target.value)} placeholder="e.g. 100" /></div>
+            </div>
+            <div>
+              <Label>Cargo dimensions (cm)</Label>
+              <div className="grid grid-cols-3 gap-3">
+                <Input type="number" min={0} value={str("cargoLengthCm")} onChange={(e) => set("cargoLengthCm", e.target.value)} placeholder="Length" />
+                <Input type="number" min={0} value={str("cargoWidthCm")} onChange={(e) => set("cargoWidthCm", e.target.value)} placeholder="Width" />
+                <Input type="number" min={0} value={str("cargoHeightCm")} onChange={(e) => set("cargoHeightCm", e.target.value)} placeholder="Height" />
+              </div>
+            </div>
             <div><Label>Item list</Label><Textarea value={str("itemsList")} onChange={(e) => set("itemsList", e.target.value)} placeholder="e.g. sofa, double bed, 10 boxes, fridge…" /></div>
             <div className="flex flex-wrap gap-4">
+              <Toggle label="Fragile cargo" checked={bool("fragile")} onChange={(c) => set("fragile", c)} />
+              <Toggle label="Help with loading" checked={bool("loadingHelp")} onChange={(c) => set("loadingHelp", c)} />
               <Toggle label="Packing" checked={bool("packing")} onChange={(c) => set("packing", c)} />
               <Toggle label="Assembly" checked={bool("assembly")} onChange={(c) => set("assembly", c)} />
               <Toggle label="Same day" checked={bool("sameDay")} onChange={(c) => set("sameDay", c)} />

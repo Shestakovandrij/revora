@@ -6,8 +6,18 @@ import { SERVICE_TYPES } from "@/lib/enums";
 
 export const metadata = { title: "Book a carrier" };
 
-export default async function BookPage({ params }: { params: Promise<{ slug: string }> }) {
+export default async function BookPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { slug } = await params;
+  const sp = await searchParams;
+  const defaults = Object.fromEntries(
+    Object.entries(sp).flatMap(([k, val]) => (typeof val === "string" ? [[k, val]] : []))
+  );
   const carrier = await prisma.carrier.findFirst({
     where: { slug, isPublished: true },
     include: {
@@ -45,7 +55,7 @@ export default async function BookPage({ params }: { params: Promise<{ slug: str
       <div className="eyebrow mb-3">Booking</div>
       <h1 className="display-md text-ink-strong mb-1">Book your move</h1>
       <p className="text-muted mb-8">Fill in your details to send a booking request to {carrierName}.</p>
-      <BookingForm carrierSlug={carrier.slug} carrierName={carrierName} rates={rates} services={services} />
+      <BookingForm carrierSlug={carrier.slug} carrierName={carrierName} rates={rates} services={services} defaults={defaults} />
     </Container>
   );
 }

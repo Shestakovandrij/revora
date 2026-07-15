@@ -11,6 +11,19 @@ export type CarrierFilters = {
   tailLift?: boolean;
   sort?: string;
   helpers?: number;
+  // Параметри вантажу — фільтрують за придатністю авто.
+  weightKg?: number;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  volumeM3?: number;
+  date?: string;
+  // Авто / перевізник
+  capacityKg?: number;       // мінімальна вантажопідйомність авто
+  bodyType?: string;         // тип кузова
+  minCompletedJobs?: number; // мін. к-сть виконаних замовлень
+  available?: boolean;       // лише доступні (не заблоковані сьогодні/на дату)
+  language?: string;         // мова спілкування
 };
 
 const publishedWhere: Prisma.CarrierWhereInput = {
@@ -51,12 +64,49 @@ export async function getCarriers(filters: CarrierFilters = {}): Promise<Carrier
 
   if (filters.europe) and.push({ europeTransport: true });
   if (filters.minRating) and.push({ avgRating: { gte: filters.minRating } });
-  if (filters.vehicleType)
-    and.push({ vehicles: { some: { vehicleType: filters.vehicleType, isActive: true } } });
-  if (filters.tailLift)
-    and.push({ vehicles: { some: { tailLift: true, isActive: true } } });
+  if (filters.minCompletedJobs) and.push({ completedJobs: { gte: filters.minCompletedJobs } });
   if (filters.service)
     and.push({ services: { some: { service: { code: filters.service } } } });
+
+  // Придатність авто: усі вимоги (тип, вага, габарити, об'єм, tail lift, кузов,
+  // вантажопідйомність) має задовольняти ОДНЕ активне авто → збираємо в один `some`.
+  const vehicleReq: Prisma.VehicleWhereInput = { isActive: true };
+  if (filters.vehicleType) vehicleReq.vehicleType = filters.vehicleType;
+  if (filters.bodyType) vehicleReq.bodyType = filters.bodyType;
+  if (filters.tailLift) vehicleReq.tailLift = true;
+  // Вага вантажу та задана мін. вантажопідйомність → беремо більше з двох.
+  const minCap = Math.max(filters.weightKg ?? 0, filters.capacityKg ?? 0);
+  if (minCap > 0) vehicleReq.loadCapacityKg = { gte: minCap };
+  if (filters.lengthCm) vehicleReq.internalLengthCm = { gte: filters.lengthCm };
+  if (filters.widthCm) vehicleReq.internalWidthCm = { gte: filters.widthCm };
+  if (filters.heightCm) vehicleReq.internalHeightCm = { gte: filters.heightCm };
+  if (filters.volumeM3) vehicleReq.volumeM3 = { gte: filters.volumeM3 };
+  if (Object.keys(vehicleReq).length > 1) and.push({ vehicles: { some: vehicleReq } });
+
+  // Дата перевезення: приховати перевізників, що позначили день як недоступний.
+  if (filters.date) {
+    const day = new Date(filters.date);
+    if (!Number.isNaN(day.getTime())) {
+      const start = new Date(day); start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      and.push({
+        NOT: { availability: { some: { date: { gte: start, lt: end }, isBlocked: true } } },
+      });
+    }
+  }
+
+  // Статус доступності: приховати перевізників, заблокованих на обрану дату
+  // (або на сьогодні, якщо дату не вказано).
+  if (filters.available) {
+    const ref = filters.date ? new Date(filters.date) : new Date();
+    if (!Number.isNaN(ref.getTime())) {
+      const start = new Date(ref); start.setHours(0, 0, 0, 0);
+      const end = new Date(start); end.setDate(end.getDate() + 1);
+      and.push({
+        NOT: { availability: { some: { date: { gte: start, lt: end }, isBlocked: true } } },
+      });
+    }
+  }
 
   // Маршрут: перевізник має покривати місто відправлення або призначення.
   const routeNames = [filters.from, filters.to].filter(Boolean) as string[];
@@ -66,11 +116,22 @@ export async function getCarriers(filters: CarrierFilters = {}): Promise<Carrier
     });
   }
 
-  return prisma.carrier.findMany({
+  let carriers = await prisma.carrier.findMany({
     where: { AND: and },
     include: carrierCardInclude,
     orderBy: orderBy(filters.sort),
   });
+
+  // Мова спілкування — languages зберігається як JSON-масив (SQLite),
+  // фільтруємо в пам'яті.
+  if (filters.language) {
+    carriers = carriers.filter((c) => {
+      const langs = Array.isArray(c.languages) ? (c.languages as string[]) : [];
+      return langs.includes(filters.language as string);
+    });
+  }
+
+  return carriers;
 }
 
 export async function getTopCarriers(limit = 4): Promise<CarrierCard[]> {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Check, ArrowRight, ArrowLeft, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select, Textarea, Label } from "@/components/ui/field";
@@ -24,6 +24,21 @@ export function RegisterForm({
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pending, start] = useTransition();
+
+  // Підхопити контакт із швидкої форми банера (PartnerHeroForm):
+  // 1) при монтуванні — із sessionStorage (напр. після переходу зі сторінки);
+  // 2) наживо — через подію partner-lead (форма вже змонтована на цій сторінці).
+  useEffect(() => {
+    const merge = (d: Record<string, string>) =>
+      setV((p) => ({ ...p, ...Object.fromEntries(Object.entries(d).filter(([, val]) => val)) }));
+    try {
+      const raw = sessionStorage.getItem("partner_lead");
+      if (raw) { merge(JSON.parse(raw)); sessionStorage.removeItem("partner_lead"); }
+    } catch {}
+    const onLead = (e: Event) => merge((e as CustomEvent).detail as Record<string, string>);
+    window.addEventListener("partner-lead", onLead);
+    return () => window.removeEventListener("partner-lead", onLead);
+  }, []);
 
   const set = (k: string, val: string | boolean) => setV((p) => ({ ...p, [k]: val }));
   const s = (k: string) => String(v[k] ?? "");
@@ -123,7 +138,7 @@ export function RegisterForm({
           <div className="grid sm:grid-cols-3 gap-4">
             <div><Label>Year</Label><Input type="number" value={s("year")} onChange={(e) => set("year", e.target.value)} placeholder="2020" /></div>
             <div><Label>Reg. number</Label><Input value={s("registrationNumber")} onChange={(e) => set("registrationNumber", e.target.value)} /></div>
-            <div><Label>Load (kg)</Label><Input type="number" value={s("loadCapacityKg")} onChange={(e) => set("loadCapacityKg", e.target.value)} /></div>
+            <div><Label>Max load (kg)</Label><Input type="number" value={s("loadCapacityKg")} onChange={(e) => set("loadCapacityKg", e.target.value)} placeholder="e.g. 1200" /></div>
           </div>
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="accent-brand w-4 h-4" checked={b("tailLift")} onChange={(e) => set("tailLift", e.target.checked)} /> Has tail lift</label>
         </div>

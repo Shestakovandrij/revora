@@ -236,6 +236,20 @@ model Order {
 
   requiredVehicleType  String?
   numberOfHelpers      Int      @default(0)
+
+  // Параметри вантажу (форма пошуку/бронювання)
+  cargoType            String?
+  cargoWeightKg        Int?
+  cargoLengthCm        Int?
+  cargoWidthCm         Int?
+  cargoHeightCm        Int?
+  cargoVolumeM3        Float?
+  cargoPlaces          Int?
+  loadingMethod        String?
+  unloadingMethod      String?
+  fragile              Boolean  @default(false)
+  loadingHelp          Boolean  @default(false)
+
   itemsList            Json?
   specialItems         Json?
   services             Json?

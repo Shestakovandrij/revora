@@ -11,14 +11,26 @@ type SP = Record<string, string | string[] | undefined>;
 
 function parseFilters(sp: SP): CarrierFilters {
   const s = (k: string) => (typeof sp[k] === "string" ? (sp[k] as string) : undefined);
+  const n = (k: string) => (s(k) && !Number.isNaN(Number(s(k))) ? Number(s(k)) : undefined);
   return {
     from: s("from"),
     to: s("to"),
+    date: s("date"),
     vehicleType: s("vehicleType"),
     service: s("service"),
-    minRating: s("minRating") ? Number(s("minRating")) : undefined,
+    minRating: n("minRating"),
     europe: s("europe") === "1",
     tailLift: s("tailLift") === "1",
+    weightKg: n("weightKg"),
+    lengthCm: n("lengthCm"),
+    widthCm: n("widthCm"),
+    heightCm: n("heightCm"),
+    volumeM3: n("volumeM3"),
+    capacityKg: n("capacityKg"),
+    bodyType: s("bodyType"),
+    minCompletedJobs: n("minCompletedJobs"),
+    available: s("available") === "1",
+    language: s("language"),
     sort: s("sort"),
   };
 }
@@ -36,6 +48,13 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
   }
 
   const routeLabel = [filters.from, filters.to].filter(Boolean).join(" → ");
+
+  // Передати параметри вантажу в посилання «Book», щоб форма бронювання їх підхопила.
+  const bookingParams = new URLSearchParams();
+  for (const [k, val] of Object.entries(sp)) {
+    if (typeof val === "string" && val && k !== "sort") bookingParams.set(k, val);
+  }
+  const bookingQuery = bookingParams.toString() ? `?${bookingParams.toString()}` : "";
 
   return (
     <Container className="pt-10 pb-24">
@@ -67,7 +86,7 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
             </Reveal>
           ) : (
             <Stagger className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3" gap={0.05}>
-              {carriers.map((c) => <StaggerItem key={c.id}><CarrierCard carrier={c} /></StaggerItem>)}
+              {carriers.map((c) => <StaggerItem key={c.id}><CarrierCard carrier={c} bookingQuery={bookingQuery} /></StaggerItem>)}
             </Stagger>
           )}
         </div>

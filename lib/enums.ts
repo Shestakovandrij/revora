@@ -159,6 +159,49 @@ export const SERVICE_TYPES: { code: string; name: string }[] = [
   { code: "WASTE_REMOVAL", name: "Waste Removal" },
 ];
 
+// Тип вантажу (форма пошуку/бронювання). Впливає на підбір авто/послуг.
+export const CARGO_TYPES: { code: string; name: string }[] = [
+  { code: "GENERAL", name: "General goods" },
+  { code: "FURNITURE", name: "Furniture" },
+  { code: "APPLIANCES", name: "Appliances" },
+  { code: "BOXES", name: "Boxes & parcels" },
+  { code: "PALLETS", name: "Pallets" },
+  { code: "FRAGILE", name: "Fragile items" },
+  { code: "BULKY", name: "Bulky / heavy items" },
+  { code: "VEHICLE", name: "Car / motorbike" },
+  { code: "OTHER", name: "Other" },
+];
+
+// Тип кузова авто.
+export const BODY_TYPES: { code: string; name: string }[] = [
+  { code: "PANEL_VAN", name: "Panel van" },
+  { code: "LUTON", name: "Luton / box" },
+  { code: "CURTAIN", name: "Curtain-side" },
+  { code: "FLATBED", name: "Flatbed" },
+  { code: "DROPSIDE", name: "Dropside" },
+  { code: "REFRIGERATED", name: "Refrigerated" },
+  { code: "TIPPER", name: "Tipper" },
+  { code: "INSULATED", name: "Insulated" },
+];
+
+// Мови спілкування перевізника.
+export const LANGUAGES = [
+  "English", "Polish", "Ukrainian", "Romanian", "French",
+  "German", "Spanish", "Portuguese", "Italian", "Lithuanian",
+] as const;
+
+// Способи завантаження / розвантаження (спільний список).
+export const LOADING_METHODS: { code: string; name: string }[] = [
+  { code: "MANUAL", name: "Manual" },
+  { code: "TAIL_LIFT", name: "Tail lift" },
+  { code: "FORKLIFT", name: "Forklift" },
+  { code: "CRANE", name: "Crane / Hiab" },
+  { code: "RAMP", name: "Ramp" },
+  { code: "REAR", name: "Rear (back doors)" },
+  { code: "SIDE", name: "Side loading" },
+  { code: "TOP", name: "Top loading" },
+];
+
 export const REVIEW_CRITERIA = [
   "overall",
   "punctuality",

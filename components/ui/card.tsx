@@ -18,7 +18,7 @@ export function CardBody({ className, ...props }: React.HTMLAttributes<HTMLDivEl
 }
 
 export function Container({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mx-auto w-full max-w-[1220px] px-5 sm:px-8", className)} {...props} />;
+  return <div className={cn("mx-auto w-full max-w-[1800px] px-5 sm:px-8 lg:px-[90px]", className)} {...props} />;
 }
 
 export function SectionTitle({

@@ -9,7 +9,7 @@ import { formatPrice } from "@/lib/utils";
 import { VEHICLE_LABELS, type VehicleType } from "@/lib/enums";
 import type { CarrierCard as CarrierCardData } from "@/server/services/carriers";
 
-export function CarrierCard({ carrier }: { carrier: CarrierCardData }) {
+export function CarrierCard({ carrier, bookingQuery = "" }: { carrier: CarrierCardData; bookingQuery?: string }) {
   const name = carrier.companyName || carrier.user.name || "Carrier";
   const vehicle = carrier.vehicles[0];
   const isNew = carrier.reviewCount === 0 && carrier.completedJobs === 0;
@@ -91,7 +91,7 @@ export function CarrierCard({ carrier }: { carrier: CarrierCardData }) {
             <Link href={`/carrier/${carrier.slug}`} className="h-9 w-9 grid place-items-center rounded-lg border border-line text-ink-strong hover:border-brand hover:text-brand transition-colors" aria-label="View profile">
               <ArrowUpRight size={16} />
             </Link>
-            <Button href={`/book/${carrier.slug}`} variant="primary" size="sm">Book</Button>
+            <Button href={`/book/${carrier.slug}${bookingQuery}`} variant="primary" size="sm">Book</Button>
           </div>
         </div>
       </div>
