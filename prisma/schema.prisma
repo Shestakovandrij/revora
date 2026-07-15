@@ -1,0 +1,338 @@
+// REVORA MOVE — схема даних.
+// Портативна: локально SQLite, у проді Hostinger — MySQL.
+// Для переходу на прод: provider = "mysql" + DATABASE_URL до Hostinger MySQL.
+// Enum-и НЕ використовуємо (несумісні з SQLite) — зберігаємо як String,
+// валідація значень — у застосунку (lib/enums.ts + Zod).
+// Гроші — Float (на сайті НЕМАЄ платежів; це орієнтовні оцінки, не рахунки).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String   @id @default(cuid())
+  email           String   @unique
+  passwordHash    String?
+  role            String   @default("CUSTOMER") // CUSTOMER | CARRIER | ADMIN | MODERATOR
+  name            String?
+  phone           String?
+  companyName     String?
+  locale          String   @default("en")
+  emailVerifiedAt DateTime?
+  createdAt       DateTime @default(now())
+
+  carrier         Carrier?
+  orders          Order[]  @relation("CustomerOrders")
+  reviewsAuthored Review[]
+}
+
+model Carrier {
+  id                 String   @id @default(cuid())
+  userId             String   @unique
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  companyName        String?
+  businessType       String   @default("OWNER_DRIVER")
+  companyRegNumber   String?
+  registeredAddress  String?
+  city               String
+  slug               String   @unique
+  experienceYears    Int      @default(0)
+  description        String?
+  languages          Json?
+  workingHours       Json?
+  europeTransport    Boolean  @default(false)
+
+  verificationStatus String   @default("PENDING") // PENDING|APPROVED|REJECTED|MORE_INFO_REQUIRED|SUSPENDED
+  isPublished        Boolean  @default(false)
+  isFeatured         Boolean  @default(false)
+  isDemo             Boolean  @default(false)
+
+  // Денормалізовані агрегати
+  avgRating          Float?   // null = ще немає відгуків (НЕ 0)
+  reviewCount        Int      @default(0)
+  completedJobs      Int      @default(0)
+  cancelledJobs      Int      @default(0)
+  completionRate     Float?
+  avgResponseMinutes Int?
+
+  // Обчислювані
+  profileCompleteness Int     @default(0)
+  rankingScore       Float    @default(0)
+
+  joinedAt           DateTime @default(now())
+
+  vehicles           Vehicle[]
+  pricing            PricingProfile?
+  documents          Document[]
+  areas              CarrierArea[]
+  services           CarrierService[]
+  availability       Availability[]
+  orders             Order[]
+  reviews            Review[]
+}
+
+model Vehicle {
+  id                 String   @id @default(cuid())
+  carrierId          String
+  carrier            Carrier  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  vehicleType        String   // CAR|VAN_SMALL|VAN_MEDIUM|VAN_LARGE|LUTON|TRUCK_7_5T|TRUCK|OTHER
+  make               String
+  model              String
+  year               Int
+  registrationNumber String
+  bodyType           String?
+  loadCapacityKg     Int?
+  internalLengthCm   Int?
+  internalWidthCm    Int?
+  internalHeightCm   Int?
+  volumeM3           Float?
+  passengerSeats     Int?     @default(0)
+  tailLift           Boolean  @default(false)
+  equipment          Json?
+  isActive           Boolean  @default(true)
+  photos             VehiclePhoto[]
+}
+
+model VehiclePhoto {
+  id        String  @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  url       String
+  type      String  @default("side") // profile|front|back|side|interior|equipment|job
+  sortOrder Int     @default(0)
+}
+
+model PricingProfile {
+  id                      String  @id @default(cuid())
+  carrierId               String  @unique
+  carrier                 Carrier @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  currency                String  @default("GBP")
+
+  baseRate                Float   @default(0)
+  perMileRate             Float   @default(0)
+  perHourRate             Float   @default(0)
+  minimumCharge           Float   @default(0)
+
+  helperRate              Float?
+  floorSurcharge          Float?
+  noLiftSurcharge         Float?
+  heavyItemSurcharge      Float?
+  bulkyItemSurcharge      Float?
+  packingSurcharge        Float?
+  assemblySurcharge       Float?
+  urgencySurcharge        Float?
+  sameDaySurcharge        Float?
+  eveningNightSurcharge   Float?
+  weekendHolidaySurcharge Float?
+  internationalBase       Float?
+  tollsFlat               Float?
+  parkingFlat             Float?
+  waitingPerHour          Float?
+  extraStopRate           Float?
+
+  perVehicleType          Json?
+}
+
+model Document {
+  id             String    @id @default(cuid())
+  carrierId      String
+  carrier        Carrier   @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  type           String    // DRIVING_LICENCE|MOT|MOTOR_INSURANCE|GOODS_IN_TRANSIT|PUBLIC_LIABILITY|COMPANY_REGISTRATION
+  fileKey        String?
+  documentNumber String?
+  issueDate      DateTime?
+  expiryDate     DateTime?
+  status         String    @default("NOT_UPLOADED") // NOT_UPLOADED|PENDING|VERIFIED|REJECTED|EXPIRED|UPDATE_REQUIRED
+  adminComment   String?
+  verifiedAt     DateTime?
+  verifiedById   String?
+
+  @@unique([carrierId, type])
+}
+
+model Area {
+  id        String        @id @default(cuid())
+  name      String
+  slug      String        @unique
+  type      String        @default("CITY") // CITY|REGION|COUNTRY
+  country   String        @default("UK")
+  isPopular Boolean       @default(false)
+  carriers  CarrierArea[]
+}
+
+model CarrierArea {
+  carrierId String
+  areaId    String
+  carrier   Carrier @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  area      Area    @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@id([carrierId, areaId])
+}
+
+model ServiceType {
+  id       String           @id @default(cuid())
+  code     String           @unique
+  name     String
+  carriers CarrierService[]
+}
+
+model CarrierService {
+  carrierId String
+  serviceId String
+  carrier   Carrier     @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  service   ServiceType @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([carrierId, serviceId])
+}
+
+model Availability {
+  id        String   @id @default(cuid())
+  carrierId String
+  carrier   Carrier  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  vehicleId String?
+  date      DateTime
+  isBlocked Boolean  @default(false)
+  note      String?
+
+  @@index([carrierId, date])
+}
+
+model Order {
+  id                   String   @id @default(cuid())
+  reference            String   @unique
+  customerUserId       String?
+  customer             User?    @relation("CustomerOrders", fields: [customerUserId], references: [id])
+  carrierId            String
+  carrier              Carrier  @relation(fields: [carrierId], references: [id])
+
+  contactName          String
+  contactPhone         String
+  contactEmail         String
+
+  serviceCode          String
+
+  pickupAddress        String
+  pickupLat            Float?
+  pickupLng            Float?
+  deliveryAddress      String
+  deliveryLat          Float?
+  deliveryLng          Float?
+  distanceMiles        Float?
+  estimatedDurationMin Int?
+
+  date                 DateTime
+  preferredTime        String?
+
+  propertyType         String?
+  pickupFloor          Int      @default(0)
+  deliveryFloor        Int      @default(0)
+  liftAvailable        Boolean  @default(false)
+
+  requiredVehicleType  String?
+  numberOfHelpers      Int      @default(0)
+  itemsList            Json?
+  specialItems         Json?
+  services             Json?
+  additionalNotes      String?
+  photos               OrderPhoto[]
+
+  estimatedPrice       Float?
+  priceBreakdown       Json?
+
+  status               String   @default("NEW")
+  statusHistory        OrderStatusHistory[]
+  review               Review?
+
+  createdAt            DateTime @default(now())
+  confirmedAt          DateTime?
+  completedAt          DateTime?
+  cancelledAt          DateTime?
+  cancelReason         String?
+  cancelledByRole      String?
+}
+
+model OrderPhoto {
+  id      String @id @default(cuid())
+  orderId String
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  url     String
+}
+
+model OrderStatusHistory {
+  id            String   @id @default(cuid())
+  orderId       String
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  fromStatus    String?
+  toStatus      String
+  changedByRole String?
+  note          String?
+  createdAt     DateTime @default(now())
+}
+
+model Review {
+  id                 String   @id @default(cuid())
+  orderId            String   @unique
+  order              Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  carrierId          String
+  carrier            Carrier  @relation(fields: [carrierId], references: [id], onDelete: Cascade)
+  authorUserId       String?
+  author             User?    @relation(fields: [authorUserId], references: [id])
+  authorName         String
+
+  overall            Int
+  punctuality        Int?
+  communication      Int?
+  quality            Int?
+  care               Int?
+  vehicleCondition   Int?
+  priceAccuracy      Int?
+
+  text               String?
+  status             String   @default("PENDING") // PENDING|PUBLISHED|HIDDEN|REJECTED
+  carrierResponse    String?
+  carrierRespondedAt DateTime?
+  isDemo             Boolean  @default(false)
+
+  submitToken        String?  @unique
+  createdAt          DateTime @default(now())
+}
+
+model Complaint {
+  id              String   @id @default(cuid())
+  type            String   // customer|carrier
+  orderId         String?
+  reason          String
+  description     String?
+  attachments     Json?
+  status          String   @default("OPEN") // OPEN|IN_REVIEW|RESOLVED
+  assignedAdminId String?
+  resolution      String?
+  createdAt       DateTime @default(now())
+}
+
+model EmailCampaign {
+  id          String    @id @default(cuid())
+  name        String
+  segment     String
+  subject     String
+  body        String
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  stats       Json?
+  createdAt   DateTime  @default(now())
+}
+
+model EmailLog {
+  id        String   @id @default(cuid())
+  to        String
+  template  String
+  orderId   String?
+  status    String   @default("queued")
+  createdAt DateTime @default(now())
+}

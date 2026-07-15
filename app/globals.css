@@ -1,0 +1,233 @@
+@import "tailwindcss";
+
+/*
+  REVORA MOVE — дизайн-система у стилі Transio.
+  Акцент: синій #146ef5. Заголовки Inter Tight, текст Urbanist.
+  Нейтралі: near-black титули, світло-сірі фони, тонкі межі.
+*/
+
+@theme {
+  /* Бренд — синій акцент (Transio) */
+  --color-brand: #146ef5;
+  --color-brand-bright: #3b82f6;
+  --color-brand-dark: #0b57d0;
+  --color-brand-soft: #e8f1ff;
+
+  /* Нейтралі */
+  --color-ink: #333333;        /* основний текст */
+  --color-ink-strong: #080808; /* заголовки / темні секції */
+  --color-muted: #6b7280;      /* другорядний текст */
+  --color-line: #e0e6eb;       /* межі */
+  --color-surface: #ffffff;
+  --color-surface-soft: #f7f7f7;
+  --color-page: #eef1f6;       /* легкий фон сторінки */
+
+  /* Стани (лише для помилок/попереджень) */
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+  --color-success: #22c55e;
+
+  /* Радіуси (Transio: кнопки ~8px, картки більші) */
+  --radius-btn: 8px;
+  --radius-card: 18px;
+  --radius-pill: 999px;
+
+  /* Тіні — flat-premium (тінь-шепіт, не важкі блоки) */
+  --shadow-whisper: 0 1px 2px rgba(8,8,8,.04);
+  --shadow-soft: 0 6px 24px -8px rgba(8,8,8,.08);
+  --shadow-lift: 0 18px 48px -16px rgba(8,8,8,.16);
+  --shadow-brand: 0 12px 32px -10px rgba(20,110,245,.35);
+
+  /* Ритм секцій (Transio 60/80/100/120/140) */
+  --space-section: clamp(64px, 8vw, 120px);
+  --container-max: 1220px;
+
+  /* Шрифти */
+  --font-sans: var(--font-urbanist), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-inter-tight), var(--font-urbanist), sans-serif;
+}
+
+:root {
+  --background: #ffffff;
+  --foreground: #333333;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 1.0625rem;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.01em;
+  }
+
+  /* Дефолти заголовків у base-шарі — утиліти text-* можуть їх перевизначати. */
+  h1, h2, h3, h4, h5 {
+    font-family: var(--font-display);
+    color: var(--color-ink-strong);
+    letter-spacing: -0.02em;
+  }
+}
+
+/* Приховати скролбар у горизонтальних стрічках */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* М'яка сітка-фон */
+.bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(20,110,245,.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(20,110,245,.06) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+/* Eyebrow-підпис із синьою крапкою (Transio subtitle) */
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: .8rem;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--color-brand-dark);
+}
+.eyebrow::before {
+  content: "";
+  width: .45rem;
+  height: .45rem;
+  border-radius: 999px;
+  background: var(--color-brand);
+}
+
+/* ── Ритм секцій ─────────────────────────────────────────── */
+.section-y { padding-top: var(--space-section); padding-bottom: var(--space-section); }
+.section-pt { padding-top: var(--space-section); }
+.section-pb { padding-bottom: var(--space-section); }
+
+/* ── Типографічна шкала (Inter Tight, tight tracking) ────── */
+.display-xl {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.75rem, 6vw, 4.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+}
+.display-lg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.25rem, 4.4vw, 3.25rem);
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+.display-md {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 3vw, 2.25rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.text-lead { font-size: clamp(1.05rem, 1.4vw, 1.2rem); line-height: 1.6; }
+
+/* ── Flat-premium картка з hover-ліфтом ──────────────────── */
+.card-hover {
+  transition: transform .35s cubic-bezier(.22,1,.36,1),
+              box-shadow .35s cubic-bezier(.22,1,.36,1),
+              border-color .35s ease;
+}
+.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+  border-color: color-mix(in srgb, var(--color-brand) 45%, var(--color-line));
+}
+
+/* ── Rolling-text для кнопок (Transio swap) ──────────────── */
+.btn-roll { position: relative; display: inline-flex; flex-direction: column; overflow: hidden; }
+.btn-roll > span { transition: transform .4s cubic-bezier(.22,1,.36,1); }
+.btn-roll > span:last-child { position: absolute; inset: 0; transform: translateY(110%); }
+.group:hover .btn-roll > span:first-child { transform: translateY(-110%); }
+.group:hover .btn-roll > span:last-child { transform: translateY(0); }
+
+/* ── М'який радіальний фон-акцент ────────────────────────── */
+.bg-halo {
+  background:
+    radial-gradient(60% 55% at 15% 0%, rgba(20,110,245,.10), transparent 60%),
+    radial-gradient(50% 45% at 100% 20%, rgba(59,130,246,.08), transparent 55%);
+}
+
+/* ── Marquee-стрічка (Transio testimonials) ──────────────── */
+.marquee { display: flex; width: max-content; }
+.marquee-track {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--marquee-gap, 1.5rem);
+  padding-right: var(--marquee-gap, 1.5rem);
+  min-width: 100%;
+  animation: marquee-scroll var(--marquee-duration, 46s) linear infinite;
+  will-change: transform;
+}
+.marquee[data-reverse="true"] .marquee-track { animation-direction: reverse; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+@keyframes marquee-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-100%); }
+}
+/* М'які краї стрічки */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 8%, #000 92%, transparent);
+}
+
+/* ── Пульсуючий пін-маркер (Transio map) ─────────────────── */
+.pulse-dot { position: relative; }
+.pulse-dot::before,
+.pulse-dot::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--color-brand);
+  animation: pulse-ring 2.6s cubic-bezier(.22,1,.36,1) infinite;
+}
+.pulse-dot::after { animation-delay: 1.3s; }
+@keyframes pulse-ring {
+  0% { transform: scale(1); opacity: .5; }
+  70% { transform: scale(3.2); opacity: 0; }
+  100% { transform: scale(3.2); opacity: 0; }
+}
+
+/* ── Sticky-stack картки (Transio booking-steps) ─────────── */
+.stack-sticky { position: sticky; }
+
+/* ── Оверлей поверх фото (hover reveal / gradient) ───────── */
+.img-overlay-hover { position: relative; overflow: hidden; }
+.img-overlay-hover .img-overlay {
+  position: absolute; inset: 0;
+  opacity: 0;
+  transition: opacity .4s cubic-bezier(.22,1,.36,1);
+}
+.img-overlay-hover:hover .img-overlay { opacity: 1; }
+.img-overlay-hover img { transition: transform .6s cubic-bezier(.22,1,.36,1); }
+.img-overlay-hover:hover img { transform: scale(1.05); }
+
+/* ── Повага до prefers-reduced-motion ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .marquee-track { animation: none !important; transform: none !important; }
+  .pulse-dot::before, .pulse-dot::after { animation: none !important; opacity: 0 !important; }
+}

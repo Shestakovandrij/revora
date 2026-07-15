@@ -1,0 +1,25 @@
+{
+  "nav": {
+    "home": "Home",
+    "findDriver": "Find a Driver",
+    "services": "Services",
+    "becomePartner": "Become a Partner",
+    "howItWorks": "How It Works",
+    "faq": "FAQ",
+    "login": "Log in",
+    "getQuote": "Get a Quote"
+  },
+  "hero": {
+    "title": "Compare & book verified movers across the UK",
+    "subtitle": "Enter your move, get instant quotes from available carriers, compare prices and ratings, and book online. No upfront payment — you pay your driver directly.",
+    "cta": "Get Instant Quotes"
+  },
+  "common": {
+    "bookNow": "Book Now",
+    "viewProfile": "View Profile",
+    "verified": "Verified",
+    "new": "New",
+    "estimatedFrom": "Estimated from",
+    "noPaymentOnline": "No payment online — pay the driver directly."
+  }
+}
