@@ -20,7 +20,9 @@ export function CarrierCard({ carrier, bookingQuery = "" }: { carrier: CarrierCa
   const services = carrier.services.map((s) => s.service.name).slice(0, 2);
 
   return (
-    <Card className="card-hover group/card overflow-hidden flex flex-col p-2">
+    <Card className="card-hover group/card relative overflow-hidden flex flex-col p-2">
+      {/* Уся картка клікабельна → профіль (кнопки нижче мають вищий z-index) */}
+      <Link href={`/carrier/${carrier.slug}`} className="absolute inset-0 z-0" aria-label={`View ${name}`} />
       <div className="relative h-40 rounded-[11px] overflow-hidden">
         <div className="w-full h-full transition-transform duration-[600ms] ease-[cubic-bezier(.22,1,.36,1)] group-hover/card:scale-[1.05]">
           <VehicleThumb
@@ -87,7 +89,7 @@ export function CarrierCard({ carrier, bookingQuery = "" }: { carrier: CarrierCa
               <p className="text-sm text-muted">Get a quote</p>
             )}
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 relative z-10">
             <Link href={`/carrier/${carrier.slug}`} className="h-9 w-9 grid place-items-center rounded-lg border border-line text-ink-strong hover:border-brand hover:text-brand transition-colors" aria-label="View profile">
               <ArrowUpRight size={16} />
             </Link>

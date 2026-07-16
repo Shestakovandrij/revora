@@ -79,20 +79,52 @@ export function RegisterForm({
   }
 
   return (
-    <Card className="p-6 max-w-2xl mx-auto">
-      {/* Progress */}
-      <div className="flex items-center gap-1 mb-6 overflow-x-auto no-scrollbar">
-        {STEPS.map((label, i) => (
-          <div key={label} className="flex items-center gap-1 shrink-0">
-            <div className={`w-7 h-7 rounded-full grid place-items-center text-xs font-semibold transition-colors ${i < step ? "bg-brand text-white" : i === step ? "bg-ink-strong text-white" : "bg-surface-soft text-muted"}`}>
-              {i < step ? <Check size={13} /> : i + 1}
-            </div>
-            {i < STEPS.length - 1 && <div className={`w-4 h-0.5 ${i < step ? "bg-brand" : "bg-line"}`} />}
+    <Card className="p-6 sm:p-8 max-w-2xl mx-auto rounded-[24px] shadow-[var(--shadow-soft)]">
+      {/* Progress header */}
+      <div className="mb-7">
+        <div className="flex items-end justify-between gap-4 mb-4">
+          <div>
+            <div className="eyebrow mb-1.5">Carrier registration</div>
+            <h2 className="text-xl font-bold text-ink-strong leading-tight">{STEPS[step]}</h2>
           </div>
-        ))}
+          <div className="text-right shrink-0">
+            <div className="font-[family-name:var(--font-display)] text-2xl font-semibold leading-none">
+              <span className="text-brand">{String(step + 1).padStart(2, "0")}</span>
+              <span className="text-line">/{String(STEPS.length).padStart(2, "0")}</span>
+            </div>
+            <div className="text-[11px] text-muted mt-1">{Math.round((step / (STEPS.length - 1)) * 100)}% complete</div>
+          </div>
+        </div>
+
+        {/* Full-width connected stepper — completed steps are clickable */}
+        <div className="flex items-center">
+          {STEPS.map((label, i) => (
+            <div key={label} className={`flex items-center ${i < STEPS.length - 1 ? "flex-1" : ""}`}>
+              <button
+                type="button"
+                onClick={() => i <= step && setStep(i)}
+                disabled={i > step}
+                aria-label={label}
+                aria-current={i === step ? "step" : undefined}
+                className={`relative grid place-items-center w-7 h-7 sm:w-8 sm:h-8 rounded-full text-[11px] sm:text-xs font-semibold shrink-0 transition-all duration-300 ${
+                  i < step
+                    ? "bg-brand text-white hover:bg-brand-dark cursor-pointer"
+                    : i === step
+                    ? "bg-ink-strong text-white ring-4 ring-ink-strong/10"
+                    : "bg-surface-soft text-muted border border-line cursor-not-allowed"
+                }`}
+              >
+                {i < step ? <Check size={13} /> : i + 1}
+              </button>
+              {i < STEPS.length - 1 && (
+                <div className="flex-1 h-[3px] mx-1 sm:mx-1.5 rounded-full bg-line overflow-hidden">
+                  <div className={`h-full rounded-full bg-brand origin-left transition-transform duration-500 ${i < step ? "scale-x-100" : "scale-x-0"}`} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
-      <h2 className="text-lg font-bold text-ink-strong mb-1">{STEPS[step]}</h2>
-      <p className="text-xs text-muted mb-5">Step {step + 1} of {STEPS.length}</p>
 
       {step === 0 && (
         <div className="space-y-4">

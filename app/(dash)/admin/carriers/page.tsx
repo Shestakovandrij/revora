@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckCircle2, XCircle, HelpCircle, PauseCircle, Star as StarIcon, ExternalLink } from "lucide-react";
+import { CheckCircle2, XCircle, HelpCircle, PauseCircle, Star as StarIcon, ExternalLink, Settings } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -63,9 +63,12 @@ export default async function AdminCarriersPage({ searchParams }: { searchParams
                       <span>Completeness: {c.profileCompleteness}%</span>
                     </div>
                   </div>
-                  {c.isPublished && (
-                    <Button href={`/carrier/${c.slug}`} variant="ghost" size="sm"><ExternalLink size={14} /> View</Button>
-                  )}
+                  <div className="flex gap-2 shrink-0">
+                    <Button href={`/admin/carriers/${c.id}`} variant="outline" size="sm"><Settings size={14} /> Manage</Button>
+                    {c.isPublished && (
+                      <Button href={`/carrier/${c.slug}`} variant="ghost" size="sm"><ExternalLink size={14} /> View</Button>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-line">

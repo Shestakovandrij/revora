@@ -2,6 +2,7 @@ import { SearchX } from "lucide-react";
 import { Container, Card } from "@/components/ui/card";
 import { CarrierCard } from "@/components/features/carrier-card";
 import { CatalogFilters, SortSelect } from "@/components/features/catalog-filters";
+import { MobileFilters } from "@/components/features/mobile-filters";
 import { getCarriers, type CarrierFilters } from "@/server/services/carriers";
 import { Reveal, Stagger, StaggerItem } from "@/components/motion/reveal";
 
@@ -68,13 +69,19 @@ export default async function CatalogPage({ searchParams }: { searchParams: Prom
       </div>
 
       <div className="grid lg:grid-cols-[280px_1fr] gap-8">
-        <Card className="lg:sticky lg:top-24 lg:self-start p-6 h-max">
+        {/* Desktop sidebar */}
+        <Card className="hidden lg:block lg:sticky lg:top-24 lg:self-start p-6 h-max">
           <CatalogFilters />
         </Card>
 
         <div>
+          {/* Mobile: filters open in a drawer (не тиснуть картки вниз) */}
+          <div className="mb-4 lg:hidden">
+            <MobileFilters />
+          </div>
+
           <div className="flex items-center justify-between mb-6 gap-4">
-            <p className="text-sm text-muted">Top 3 matches shown first</p>
+            <p className="text-sm text-muted">Sorted by highest rating</p>
             <SortSelect />
           </div>
 

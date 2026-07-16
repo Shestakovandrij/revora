@@ -14,16 +14,30 @@ function nextDays(count: number): Date[] {
   });
 }
 
+// Локальний календарний день як YYYY-MM-DD (без зсуву в UTC, який давав off-by-one).
+function ymd(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 export default async function CalendarPage() {
   const session = await getSession();
   const carrier = await prisma.carrier.findUnique({ where: { userId: session!.sub } });
   if (!carrier) return <p>No carrier profile.</p>;
 
   const days = nextDays(28);
+  // Межі діапазону — UTC-північ відповідних календарних днів (дати зберігаємо як UTC-північ).
+  const gte = new Date(`${ymd(days[0])}T00:00:00.000Z`);
+  const lte = new Date(`${ymd(days[days.length - 1])}T23:59:59.999Z`);
   const blocks = await prisma.availability.findMany({
-    where: { carrierId: carrier.id, date: { gte: days[0], lte: days[days.length - 1] } },
+    where: { carrierId: carrier.id, date: { gte, lte } },
   });
-  const blockedSet = new Set(blocks.filter((b) => b.isBlocked).map((b) => new Date(b.date).toDateString()));
+  // Ключ — календарний день у UTC (збігається з ymd(d), бо зберігаємо UTC-північ).
+  const blockedSet = new Set(
+    blocks.filter((b) => b.isBlocked).map((b) => b.date.toISOString().slice(0, 10))
+  );
 
   return (
     <div className="space-y-6 max-w-3xl">
@@ -35,10 +49,11 @@ export default async function CalendarPage() {
       <Card className="p-5">
         <div className="grid grid-cols-7 gap-2">
           {days.map((d) => {
-            const blocked = blockedSet.has(d.toDateString());
+            const key = ymd(d);
+            const blocked = blockedSet.has(key);
             return (
-              <form key={d.toISOString()} action={toggleAvailabilityAction}>
-                <input type="hidden" name="date" value={d.toISOString().slice(0, 10)} />
+              <form key={key} action={toggleAvailabilityAction}>
+                <input type="hidden" name="date" value={key} />
                 <button
                   type="submit"
                   className={`w-full aspect-square rounded-xl border text-center flex flex-col items-center justify-center transition-colors ${

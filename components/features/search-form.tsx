@@ -1,15 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { MapPin, Calendar, Truck, Search, SlidersHorizontal, Scale } from "lucide-react";
+import { MapPin, Calendar, Truck, Search, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/field";
 import { VEHICLE_TYPES, VEHICLE_LABELS } from "@/lib/enums";
 
 export function SearchForm({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
-  const [advanced, setAdvanced] = useState(false);
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -49,38 +47,8 @@ export function SearchForm({ compact = false }: { compact?: boolean }) {
         </Field>
       </div>
 
-      {advanced && (
-        <div className="grid gap-3 sm:grid-cols-3 mt-3 pt-3 border-t border-line">
-          <Field label="Helpers">
-            <Select name="helpers" defaultValue="">
-              <option value="">Any</option>
-              {[0, 1, 2, 3].map((n) => <option key={n} value={n}>{n} helpers</option>)}
-            </Select>
-          </Field>
-          <Field label="Options">
-            <Select name="europe" defaultValue="">
-              <option value="">Any coverage</option>
-              <option value="1">Europe transport</option>
-            </Select>
-          </Field>
-          <Field label="Equipment">
-            <Select name="tailLift" defaultValue="">
-              <option value="">Any</option>
-              <option value="1">Tail lift</option>
-            </Select>
-          </Field>
-        </div>
-      )}
-
-      <div className="flex items-center justify-between mt-4 gap-3">
-        <button
-          type="button"
-          onClick={() => setAdvanced((v) => !v)}
-          className="text-sm text-muted hover:text-brand-dark inline-flex items-center gap-1.5"
-        >
-          <SlidersHorizontal size={15} /> {advanced ? "Fewer options" : "More options"}
-        </button>
-        <Button type="submit" size="lg" className="min-w-44">
+      <div className="flex justify-end mt-4">
+        <Button type="submit" size="lg" className="min-w-44 max-sm:w-full">
           <Search size={18} /> Get Instant Quotes
         </Button>
       </div>

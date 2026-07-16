@@ -31,10 +31,10 @@ const DEST_IMAGES = [
 const MAP_VIEWBOX = "360 352 115 78";
 const MAP_ORIGIN = { x: 360, y: 352, w: 115, h: 78 };
 const MAP_CITIES = [
-  { mx: 405, my: 389, label: "London", hub: true },
-  { mx: 410, my: 409, label: "France" },
-  { mx: 431, my: 391, label: "Germany" },
-  { mx: 450, my: 388, label: "Poland" },
+  { mx: 405, my: 389, label: "London", flag: "gb", hub: true },
+  { mx: 410, my: 409, label: "France", flag: "fr" },
+  { mx: 431, my: 391, label: "Germany", flag: "de" },
+  { mx: 450, my: 388, label: "Poland", flag: "pl" },
 ];
 const pinPct = (mx: number, my: number) => ({
   left: ((mx - MAP_ORIGIN.x) / MAP_ORIGIN.w) * 100,
@@ -187,10 +187,10 @@ export default async function HomePage() {
                   ))}
                 </div>
               </div>
-              <div className="relative w-full" style={{ aspectRatio: "115 / 78" }}>
-                {/* Детальна карта Європи (UK — синім, решта — сірим) */}
+              <div className="relative w-full rounded-[18px] overflow-hidden ring-1 ring-line/70 shadow-[var(--shadow-soft)]" style={{ aspectRatio: "115 / 78" }}>
+                {/* Детальна карта Європи (море + суша, країни покриття — синім) */}
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/images/europe-map.svg" alt="Coverage across the UK and Europe" className="absolute inset-0 h-full w-full object-contain" />
+                <img src="/images/europe-map.svg" alt="Coverage across the UK and Europe" className="absolute inset-0 h-full w-full object-cover" />
 
                 {/* Пунктирні дуги від London до напрямків */}
                 <svg viewBox={MAP_VIEWBOX} preserveAspectRatio="xMidYMid meet" className="pointer-events-none absolute inset-0 h-full w-full overflow-visible">
@@ -219,12 +219,15 @@ export default async function HomePage() {
                   return (
                     <span
                       key={c.label}
-                      className="absolute z-10 flex items-center gap-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pl-1.5 pr-3 py-1 shadow-[var(--shadow-lift)] border border-line/70"
+                      className="absolute z-10 flex items-center gap-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white pl-1 pr-2.5 py-1 shadow-[var(--shadow-lift)] border border-line/70 ring-1 ring-black/5"
                       style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
                     >
                       <span className="relative grid place-items-center">
-                        {c.hub && <span className="pulse-dot col-start-1 row-start-1 w-3 h-3" />}
-                        <span className={`col-start-1 row-start-1 rounded-full ring-2 ring-white ${c.hub ? "w-3 h-3 bg-brand" : "w-2.5 h-2.5 bg-brand"}`} />
+                        {c.hub && <span className={`pulse-dot col-start-1 row-start-1 rounded-full ${c.hub ? "w-6 h-6" : ""}`} />}
+                        <span className={`relative col-start-1 row-start-1 rounded-full overflow-hidden ring-2 ring-white shadow-sm ${c.hub ? "w-7 h-7" : "w-6 h-6"}`}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={`/images/flags/${c.flag}.svg`} alt={c.label} className="h-full w-full object-cover" />
+                        </span>
                       </span>
                       <span className="text-[13px] font-semibold text-ink-strong whitespace-nowrap">{c.label}</span>
                     </span>

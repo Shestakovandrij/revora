@@ -29,7 +29,7 @@ const ADVANCED_FIELDS = [
   "language", "fragile", "loadingHelp", "comment",
 ];
 
-export function CatalogFilters() {
+export function CatalogFilters({ onApplied }: { onApplied?: () => void } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const sp = useSearchParams();
@@ -52,11 +52,13 @@ export function CatalogFilters() {
       if (v) params.set(k, v);
     }
     router.push(`${pathname}?${params.toString()}`);
+    onApplied?.();
   }
 
   function clear() {
     setF(Object.fromEntries(FIELDS.map((k) => [k, ""])));
     router.push(pathname);
+    onApplied?.();
   }
 
   return (
@@ -252,16 +254,17 @@ export function SortSelect() {
 
   function update(value: string) {
     const params = new URLSearchParams(sp.toString());
-    if (value && value !== "recommended") params.set("sort", value);
+    // "rating" — типове сортування, тримаємо URL чистим
+    if (value && value !== "rating") params.set("sort", value);
     else params.delete("sort");
     router.push(`${pathname}?${params.toString()}`);
   }
 
   return (
-    <Select value={sp.get("sort") ?? "recommended"} onChange={(e) => update(e.target.value)} className="w-52">
+    <Select value={sp.get("sort") ?? "rating"} onChange={(e) => update(e.target.value)} className="w-52">
+      <option value="rating">Highest rating</option>
       <option value="recommended">Recommended</option>
       <option value="price">Lowest price</option>
-      <option value="rating">Highest rating</option>
       <option value="reviews">Most reviews</option>
       <option value="jobs">Most completed jobs</option>
       <option value="newest">Newest carriers</option>

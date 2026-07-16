@@ -33,7 +33,11 @@ const publishedWhere: Prisma.CarrierWhereInput = {
 
 export const carrierCardInclude = {
   user: { select: { name: true } },
-  vehicles: { where: { isActive: true }, include: { photos: true }, take: 1 },
+  vehicles: {
+    where: { isActive: true },
+    include: { photos: { orderBy: { sortOrder: "asc" } } },
+    take: 1,
+  },
   areas: { include: { area: true } },
   services: { include: { service: true } },
   pricing: true,
@@ -44,8 +48,8 @@ export type CarrierCard = Prisma.CarrierGetPayload<{ include: typeof carrierCard
 /** Сортування каталогу з fallback tie-break на rankingScore (для cold start). */
 function orderBy(sort?: string): Prisma.CarrierOrderByWithRelationInput[] {
   switch (sort) {
-    case "rating":
-      return [{ avgRating: { sort: "desc", nulls: "last" } }, { rankingScore: "desc" }];
+    case "recommended":
+      return [{ isFeatured: "desc" }, { rankingScore: "desc" }, { profileCompleteness: "desc" }];
     case "reviews":
       return [{ reviewCount: "desc" }, { rankingScore: "desc" }];
     case "jobs":
@@ -54,8 +58,8 @@ function orderBy(sort?: string): Prisma.CarrierOrderByWithRelationInput[] {
       return [{ joinedAt: "desc" }];
     case "price":
       return [{ rankingScore: "desc" }]; // ціна залежить від маршруту — сортуємо в пам'яті за потреби
-    default: // "recommended"
-      return [{ isFeatured: "desc" }, { rankingScore: "desc" }, { profileCompleteness: "desc" }];
+    default: // "rating" — за замовчуванням: рейтинг від найбільшого (нові з null — в кінці)
+      return [{ avgRating: { sort: "desc", nulls: "last" } }, { rankingScore: "desc" }];
   }
 }
 
@@ -148,7 +152,7 @@ export async function getCarrierBySlug(slug: string) {
     where: { slug, ...publishedWhere },
     include: {
       user: { select: { name: true } },
-      vehicles: { include: { photos: true } },
+      vehicles: { include: { photos: { orderBy: { sortOrder: "asc" } } } },
       areas: { include: { area: true } },
       services: { include: { service: true } },
       pricing: true,
